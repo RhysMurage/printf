@@ -24,5 +24,24 @@ int _printf(const char *format, ...)
 	va_start(ap, format);
 
 	if (format == NULL)
-		return (char_count)
+		return (-1);
+
+	for (i = 0; format[i] != 0; i++)
+	{
+		if (format[i] != '%')
+		{
+			_putchar(format[i]);
+			char_count++;
+			continue;
+		}
+
+		if (format[i + 1] == '\0')
+		{
+			return (-1);
+		}
+
+		char_count += get_printing_func(format[i + 1], &ap);
+		i++;
+	}
+	return (char_count);
 }
