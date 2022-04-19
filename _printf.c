@@ -1,42 +1,45 @@
 #include "main.h"
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 /**
- * _printf - clone of the function printf in stdio.h
- * @format: the string to be printed along with format specifiers preceded by %
+ * _printf - prints anything
+ * @format: list of argument types passed to the function
  *
- * Return: the number of characters printed
+ * Return: number of characters printed
  */
-
 int _printf(const char *format, ...)
 {
-	int char_count = 0; /* Total number of chars printed to stdout */
-	va_list ap; /* Contains the list of arguments passed after format */
-	int i; /* Used to loop through all characters in format */
-
-	va_start(ap, format);
+	unsigned int i = 0, count = 0;
+	va_list valist;
+	int (*f)(va_list);
 
 	if (format == NULL)
 		return (-1);
-
-	for (i = 0; format[i] != 0; i++)
+	va_start(valist, format);
+	while (format[i])
 	{
-		if (format[i] != '%')
+		for (; format[i] != '%' && format[i]; i++)
 		{
 			_putchar(format[i]);
-			char_count++;
+			count++;
+		}
+		if (!format[i])
+			return (count);
+		f = check_for_specifiers(&format[i + 1]);
+		if (f != NULL)
+		{
+			count += f(valist);
+			i += 2;
 			continue;
 		}
-
-		if (format[i + 1] == '\0')
-		{
+		if (!format[i + 1])
 			return (-1);
-		}
-
-		char_count += get_printing_func(format[i + 1], &ap);
-		i++;
+		_putchar(format[i]);
+		count++;
+		if (format[i + 1] == '%')
+			i += 2;
+		else
+			i++;
 	}
-	return (char_count);
+	va_end(valist);
+	return (count);
 }
