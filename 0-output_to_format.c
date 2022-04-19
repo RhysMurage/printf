@@ -12,36 +12,41 @@
 
 int _printf(const char *format, ...)
 {
-	/* Total number of chars printed to stdout */
-	int char_count = 0;
+	int(*pfunc)(va_list, flags_t *);
+	const char *p;
+	va_list args;
+	flags_t flags = {0, 0, 0};
 
-	/* Contains the list of arguments passed after format */
-	va_list ap;
+	register int count = 0;
 
-	/* Used to loop through all characters in format */
-	int i;
-
-	va_start(ap, format);
-
-	if (format == NULL)
+	va_start(args, format);
+	if (!format || (format[0] == '%' && !format[1]))
 		return (-1);
 
-	for (i = 0; format[i] != 0; i++)
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+
+	for (p = format; *p; p++)
 	{
-		if (format[i] != '%')
+		if (*p == '%')
 		{
-			_putchar(format[i]);
-			char_count++;
-			continue;
-		}
-
-		if (format[i + 1] == '\0')
-		{
-			return (-1);
-		}
-
-		char_count += get_printing_func(format[i + 1], &ap);
-		i++;
+			p++;
+			if (*p == '%')
+			{
+				count += _putchar('%');
+				continue;
+			}
+			while (get_flag(*p, &flags))
+				p++;
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(args, &flags)
+				: _printf("%%%c", *p);
+		} else
+			count += _putchar(*p);
 	}
-	return (char_count);
+	_putchar(-1);
+	va_end(args);
+
+	return (count);
 }
