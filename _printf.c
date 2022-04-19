@@ -2,72 +2,87 @@
 #include <stdlib.h>
 
 /**
- * check_for_specifiers - checks if there is a valid format specifier
- * @format: possible format specifier
+ * get_printing_func - runs a function based on the specifier @a passed
+ * @a: the format specifier
+ * @ap: the list of arguments passed to the _printf function
  *
- * Return: pointer to valid function or NULL
+ * Return: the number of characters printed (depends on which function is
+ * called)
+ *		  1 if there is there is no corresponding function for the specifier
  */
-static int (*check_for_specifiers(const char *format))(va_list)
+int get_printing_func(char a, va_list *ap)
 {
-	unsigned int i;
-	print_t p[] = {
-		{"c", print_c},
-		{"s", print_s},
-		{"d", print_d},
-		{"i", print_i},
-		{NULL, NULL}
-	};
+	char *s, *ss;
+	int x;
 
-	for (i = 0; p[i].t != NULL; i++)
+	if (a == 'c')
+		return (_putchar(va_arg(*ap, int)));
+	else if (a == 's')
+		return (put_str(va_arg(*ap, char*)));
+	else if (a == 'i' || a == 'd')
+		return (put_int(va_arg(*ap, int)));
+	else if (a == 'b')
+		return (put_binary((unsigned int) va_arg(*ap, int)));
+	else if (a == 'R')
 	{
-		if (*(p[i].t) == *format)
-		{
-			break;
-		}
+		ss = va_arg(*ap, char *);
+		s = malloc(sizeof(char) * _strlen(ss));
+		_strcpy(s, ss);
+
+		x = put_rot13(s);
+
+		free(s);
+		return (x);
 	}
-	return (p[i].f);
+
+	/**
+	 * If all if's fail, just print % and the passed character without
+	 * considering it as a format specifier
+	 */
+	 _putchar('%');
+	if (a == '%')
+	{
+		return (1);  /* Only % will be printed if a is % */
+	}
+
+	_putchar(a);
+	return (2); /* Since the number of characters printed is 2 only */
 }
 
 /**
- * _printf - prints anything
- * @format: list of argument types passed to the function
+ * _printf - clone of the function printf in stdio.h
+ * @format: the string to be printed along with format specifiers preceded by %
  *
- * Return: number of characters printed
+ * Return: the number of characters printed
  */
+
 int _printf(const char *format, ...)
 {
-	unsigned int i = 0, count = 0;
-	va_list valist;
-	int (*f)(va_list);
+	int char_count = 0; /* Total number of chars printed to stdout */
+	va_list ap; /* Contains the list of arguments passed after format */
+	int i; /* Used to loop through all characters in format */
+
+	va_start(ap, format);
 
 	if (format == NULL)
 		return (-1);
-	va_start(valist, format);
-	while (format[i])
+
+	for (i = 0; format[i] != 0; i++)
 	{
-		for (; format[i] != '%' && format[i]; i++)
+		if (format[i] != '%')
 		{
 			_putchar(format[i]);
-			count++;
-		}
-		if (!format[i])
-			return (count);
-		f = check_for_specifiers(&format[i + 1]);
-		if (f != NULL)
-		{
-			count += f(valist);
-			i += 2;
+			char_count++;
 			continue;
 		}
-		if (!format[i + 1])
+
+		if (format[i + 1] == '\0')
+		{
 			return (-1);
-		_putchar(format[i]);
-		count++;
-		if (format[i + 1] == '%')
-			i += 2;
-		else
-			i++;
+		}
+
+		char_count += get_printing_func(format[i + 1], &ap);
+		i++;
 	}
-	va_end(valist);
-	return (count);
+	return (char_count);
 }
